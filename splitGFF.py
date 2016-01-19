@@ -49,7 +49,7 @@ GenesList=[]
 scaffold=''
 gene=''
 genelist=[]
-print('%s software version is %s' % (Softwarename, version))
+print('%s software version is %s in 2016-01-19' % (Softwarename, version))
 print(bugfixs)
 print('starts at :' + time.strftime('%Y-%m-%d %H:%M:%S'))
 
