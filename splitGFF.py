@@ -1,8 +1,10 @@
+#coding=utf-8
 __author__ = 'Guoliang Lin'
 Softwarename = 'splitGFF'
-version = '2.0.1'
+version = '3.0.1'
 data=''
-bugfixs = 'fix some reversed exon'
+bugfixs = '     2015-12-18:fix some reversed exon\n' \
+          '     2016-01-16:spacefy nonconding items\n'
 import sys, getopt
 import time
 def trim(y):
@@ -58,6 +60,7 @@ for o, a in opts:
         InputFileName = a
     elif o in ['-t','--type']:
         etype=a
+#"CDS","exon"
     elif o in ['-h', '--help']:
         help = True
 with open(InputFileName, 'r') as InputFile:
@@ -65,24 +68,38 @@ with open(InputFileName, 'r') as InputFile:
         with open(InputFileName+'-intron','w') as intron:
             with open(InputFileName+'-utr','w') as utr:
                 with open(InputFileName+'-intergenic','w') as intergenic:
-                    for item in InputFile:
-                        listitem=item.split();
-                        if len(listitem)!=0:
-                            if scaffold!=listitem[0]:
-                                convert_to_type([scaffold,'.','intergenic',str(sys.maxint),str(sys.maxint),'.','.','.',gene],GenesList,intergenic,'intergenic',gene)
-                                scaffold=listitem[0]
-                                GenesList=[[0,0]]
-                                ExonsList=[]
-                                gene=''
-                            if listitem[2]==etype:
-                                cds.write(trim(str(listitem)))
-                            elif listitem[2].find('UTR')!=-1:
-                                utr.write(trim(str(listitem)))
-                            elif listitem[2]=='gene':
-                                tmpname=gene
-                                gene=listitem[-1]
-                                convert_to_type(listitem,GenesList,intergenic,'intergenic',tmpname+';'+gene)
-                                ExonsList=[]
-                            if listitem[2]=='exon':
-                                convert_to_type(listitem,ExonsList,intron,'intron',gene)
+                    with open(InputFileName+"-noncoding",'w') as nocoding:
+                        for item in InputFile:
+                            listitem=item.split();
+                            if len(listitem)!=0:
+                                if scaffold!=listitem[0]:
+                                    convert_to_type([scaffold,'.','intergenic',str(sys.maxint),str(sys.maxint),'.','.','.',gene],GenesList,intergenic,'intergenic',gene)
+                                    scaffold=listitem[0]
+                                    GenesList=[[0,0]]
+                                    ExonsList=[]
+                                    gene=''
+                                if listitem[2]==etype:
+                                    cds.write(trim(str(listitem)))
+                                elif listitem[2].find('UTR')!=-1:
+                                    utr.write(trim(str(listitem)))
+                                elif listitem[2]=='gene':
+                                    tmpname=gene
+                                    gene=listitem[-1]
+                                    convert_to_type(listitem,GenesList,intergenic,'intergenic',tmpname+';'+gene)
+                                    ExonsList=[]
+                                elif listitem[2]=="mRNA":
+                                    list1=listitem[:]
+                                    if int(listitem[3])>int(GenesList[-1][0]):
+                                        listitem[4]=str(int(listitem[3])-1)
+                                        listitem[3]=GenesList[-1][0]
+                                        listitem[2]="noncodingRNA"
+                                        nocoding.write(trim(str(listitem)))
+                                    if int(list1[4])<int(GenesList[-1][1]):
+                                        list1[3]=str(int(list1[4])+1)
+                                        list1[4]=GenesList[-1][1]
+                                        list1[2]="noncodingRNA"
+                                        nocoding.write(trim(str(list1)))
+                                if listitem[2]=='exon':
+                                    convert_to_type(listitem,ExonsList,intron,'intron',gene)
+                        convert_to_type([scaffold,'.','intergenic',str(sys.maxint),str(sys.maxint),'.','.','.',gene],GenesList,intergenic,'intergenic',gene)
 print('ends at :' + time.strftime('%Y-%m-%d %H:%M:%S'))
